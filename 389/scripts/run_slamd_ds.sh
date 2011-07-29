@@ -36,12 +36,13 @@
 #    [-h <ds_host>] [-p <ds_port>] [-i <ID>] [-d <dbinstname>]
 #    [-s <suffix>] [-t <testhome>] [-l <testldif>] [-m <initldif>]
 #    [-T <slamdhost>] [-E <slamdhome>] [-R <duration>]
-#    [-I <interval>] [-P] [-S] [-A] [-M]
+#    [-I <interval>] [-P] [-S] [-A] [-M] [-U]
 #
 #    -S: run search
 #    -A: run add and delete
 #    -M: run modify
-#    Note: if -[SAM] not specified, run all 3 tests
+#    -U: run auth/bind"
+#    Note: if -[SAMU] not specified, run all 4 tests
 #
 #    -P: run profiler; the results are found in $TESTHOME/results/prof/$NOW
 #        opreport -l /usr/sbin/ns-slapd --session-dir=dir_path
@@ -606,13 +607,13 @@ print_usage()
 	echo "		[-s <suffix>] [-t <testhome>] [-z <size>, e.g., 10k]"
 	echo "		[-l <testldif>] [-m <initldif>]"
 	echo "		[-T <slamdhost>] [-E <slamdhome>] [-R <duration>]"
-	echo "		[-I <interval>] [-P] [-S] [-A] [-M]"
+	echo "		[-I <interval>] [-P] [-S] [-A] [-M] [-U]"
 	echo "	-P: run profiler"
 	echo "	-S: run search"
 	echo "	-A: run add and delete"
 	echo "	-M: run modify"
 	echo "	-U: run auth/bind"
-	echo "	Note: if -[SAM] not specified, run all 3 tests"
+	echo "	Note: if -[SAMU] not specified, run all 4 tests"
 }
 
 OPTIND=1
