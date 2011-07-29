@@ -1,2 +1,47 @@
 Tools to run slamd scripts against 389 directory server.
 
+[Files and Directories]
+README: this file
+
+389: Directory which stores a launch script and test ldif files
+     The sub directory scripts and ldif are to put on the host on which DS runs:
+     DS host:$TESTHOME/{scripts,ldif}
+
+389/scripts
+389/scripts/run_slamd_ds.sh: launch script
+    Usage:
+    ./run_slamd_ds.sh [-D <directory_manager>] [-w <passwd>]
+            [-h <ds_host>] [-p <ds_port>] [-i <ID>] [-d <dbinstname>]
+            [-s <suffix>] [-t <testhome>] [-z <size>, e.g., 10k]
+            [-l <testldif>] [-m <initldif>]
+            [-T <slamdhost>] [-E <slamdhome>] [-R <duration>]
+            [-I <interval>] [-P] [-S] [-A] [-M]
+        -P: run profiler
+        -S: run search
+        -A: run add and delete
+        -M: run modify
+        -U: run auth/bind
+        Note: if -[SAM] not specified, run all 3 tests
+
+389/ldif
+389/ldif/init.ldif: minimum ldif
+389/ldif/example10k.ldif: ldif of 10k entries
+
+slamd: Directory which stores slamd scripts
+       The sub directory scripts is supposed to put in the expanded slamd dir:
+       $ ls /export/tests/slamd/slamd
+       README		   conf/  results/  slamd-2.0.1.war@  tools/
+       SLAMD-License.txt  lib/   scripts/  temp/	      webapps/
+       bin/		   logs/  server/   thirdparty/       work/
+
+slamd/scripts
+slamd/scripts/run-script-wrapper.sh: a wrapper script to launch run-script.sh
+slamd/scripts/gen-rep-avgpersec.sh: generate csv file for the openoffice calc
+
+slamd/scripts/10k: slamd scripts for 10k entry data
+slamd/scripts/10k/add_delete.script
+slamd/scripts/10k/bind.script
+slamd/scripts/10k/modify.script
+slamd/scripts/10k/search.seq.script
+slamd/scripts/10k/search.random.script
+
