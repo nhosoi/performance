@@ -342,15 +342,14 @@ run_add_delete_all()
 	# cachememsize: 2G, dbcachesize: 1G, 8 threads
 	run_add_delete $TWOGIG $ONEGIG 8 "2G.1G.8"
 
-# Uncomment when running on a large memory machine!!!
-#	# cachememsize: 2G, dbcachesize: 1G, 16 threads
-#	run_add_delete $TWOGIG $ONEGIG 16 "2G.1G.16"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 32 threads
-#	run_add_delete $TWOGIG $ONEGIG 32 "2G.1G.32"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 64 threads
-#	run_add_delete $TWOGIG $ONEGIG 64 "2G.1G.64"
+	# cachememsize: 2G, dbcachesize: 1G, 16 threads
+	run_add_delete $TWOGIG $ONEGIG 16 "2G.1G.16"
+
+	# cachememsize: 2G, dbcachesize: 1G, 32 threads
+	run_add_delete $TWOGIG $ONEGIG 32 "2G.1G.32"
+
+	# cachememsize: 2G, dbcachesize: 1G, 64 threads
+	run_add_delete $TWOGIG $ONEGIG 64 "2G.1G.64"
 
 	# generate add result (avg/sec) for office calc
 	ssh $SLAMDHOST $SCRIPTREP add $RESULTDIR
@@ -425,15 +424,14 @@ run_search_all()
 	# cachememsize: 2G, dbcachesize: 1G, 8 threads
 	run_search $TWOGIG $ONEGIG 8 "2G.1G.8"
 
-# Uncomment when running on a large memory machine!!!
-#	# cachememsize: 2G, dbcachesize: 1G, 16 threads
-#	run_search $TWOGIG $ONEGIG 16 "2G.1G.16"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 32 threads
-#	run_search $TWOGIG $ONEGIG 32 "2G.1G.32"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 64 threads
-#	run_search $TWOGIG $ONEGIG 64 "2G.1G.64"
+	# cachememsize: 2G, dbcachesize: 1G, 16 threads
+	run_search $TWOGIG $ONEGIG 16 "2G.1G.16"
+
+	# cachememsize: 2G, dbcachesize: 1G, 32 threads
+	run_search $TWOGIG $ONEGIG 32 "2G.1G.32"
+
+	# cachememsize: 2G, dbcachesize: 1G, 64 threads
+	run_search $TWOGIG $ONEGIG 64 "2G.1G.64"
 
 	# generate search result (avg/sec) for office calc
 	ssh $SLAMDHOST $SCRIPTREP search $RESULTDIR
@@ -505,15 +503,14 @@ run_modify_all()
 	# cachememsize: 2G, dbcachesize: 1G, 8 threads
 	run_modify $TWOGIG $ONEGIG 8 "2G.1G.8"
 
-# Uncomment when running on a large memory machine!!!
-#	# cachememsize: 2G, dbcachesize: 1G, 16 threads
-#	run_modify $TWOGIG $ONEGIG 16 "2G.1G.16"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 32 threads
-#	run_modify $TWOGIG $ONEGIG 32 "2G.1G.32"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 64 threads
-#	run_modify $TWOGIG $ONEGIG 64 "2G.1G.64"
+	# cachememsize: 2G, dbcachesize: 1G, 16 threads
+	run_modify $TWOGIG $ONEGIG 16 "2G.1G.16"
+
+	# cachememsize: 2G, dbcachesize: 1G, 32 threads
+	run_modify $TWOGIG $ONEGIG 32 "2G.1G.32"
+
+	# cachememsize: 2G, dbcachesize: 1G, 64 threads
+	run_modify $TWOGIG $ONEGIG 64 "2G.1G.64"
 
 	# generate modify result (avg/sec) for office calc
 	ssh $SLAMDHOST $SCRIPTREP modify $RESULTDIR
@@ -585,15 +582,14 @@ run_auth_all()
 	# cachememsize: 2G, dbcachesize: 1G, 8 threads
 	run_auth $TWOGIG $ONEGIG 8 "2G.1G.8"
 
-# Uncomment when running on a large memory machine!!!
-#	# cachememsize: 2G, dbcachesize: 1G, 16 threads
-#	run_auth $TWOGIG $ONEGIG 16 "2G.1G.16"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 32 threads
-#	run_auth $TWOGIG $ONEGIG 32 "2G.1G.32"
-#
-#	# cachememsize: 2G, dbcachesize: 1G, 64 threads
-#	run_auth $TWOGIG $ONEGIG 64 "2G.1G.64"
+	# cachememsize: 2G, dbcachesize: 1G, 16 threads
+	run_auth $TWOGIG $ONEGIG 16 "2G.1G.16"
+
+	# cachememsize: 2G, dbcachesize: 1G, 32 threads
+	run_auth $TWOGIG $ONEGIG 32 "2G.1G.32"
+
+	# cachememsize: 2G, dbcachesize: 1G, 64 threads
+	run_auth $TWOGIG $ONEGIG 64 "2G.1G.64"
 
 	# generate auth result (avg/sec) for office calc
 	ssh $SLAMDHOST $SCRIPTREP bind $RESULTDIR

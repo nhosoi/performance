@@ -15,13 +15,13 @@ README: this file
             [-s <suffix>] [-t <testhome>] [-z <size>, e.g., 10k]
             [-l <testldif>] [-m <initldif>]
             [-T <slamdhost>] [-E <slamdhome>] [-R <duration>]
-            [-I <interval>] [-P] [-S] [-A] [-M]
+            [-I <interval>] [-P] [-S] [-A] [-M] [-U]
         -P: run profiler
         -S: run search
         -A: run add and delete
         -M: run modify
         -U: run auth/bind
-        Note: if -[SAM] not specified, run all 3 tests
+        Note: if -[SAMU] not specified, run all tests
 
 389/ldif
 389/ldif/init.ldif: minimum ldif
@@ -37,6 +37,7 @@ slamd: Directory which stores slamd scripts
 slamd/scripts
 slamd/scripts/run-script-wrapper.sh: a wrapper script to launch run-script.sh
 slamd/scripts/gen-rep-avgpersec.sh: generate csv file for the openoffice calc
+slamd/scripts/calc-avg.pl: script to calculate averaged value
 
 slamd/scripts/10k: slamd scripts for 10k entry data
 slamd/scripts/10k/add_delete.script
