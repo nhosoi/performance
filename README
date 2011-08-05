@@ -46,3 +46,17 @@ slamd/scripts/10k/modify.script
 slamd/scripts/10k/search.seq.script
 slamd/scripts/10k/search.random.script
 
+replication: tool(s) to measure replication performance
+
+replication/buildit: build script
+replication/replperf.c: tool to measure replication performance
+
+    Usage:
+    ./replperf -h <masterhost> -p <masterport>
+        -i <replicahost> -q <replicaport>
+        -D <masterbdn> -w <masterbpw>
+        -d <replicabdn> -W <replicabpw>
+        -n <number_of_entries> -I <interval_to_measure>
+        -b <basedn> -s <nanosec> -t <threads> -v
+        <nanosec>: nano seconds to wait b/w 2 adds
+
