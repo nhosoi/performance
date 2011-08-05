@@ -37,7 +37,8 @@ slamd: Directory which stores slamd scripts
 slamd/scripts
 slamd/scripts/run-script-wrapper.sh: a wrapper script to launch run-script.sh
 slamd/scripts/gen-rep-avgpersec.sh: generate csv file for the openoffice calc
-slamd/scripts/calc-avg.pl: script to calculate averaged value
+slamd/scripts/calc-avg.pl: script to calculate averaged values
+slamd/scripts/calc-sum.pl: script to calculate summed up values
 
 slamd/scripts/10k: slamd scripts for 10k entry data
 slamd/scripts/10k/add_delete.script
