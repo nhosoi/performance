@@ -58,6 +58,11 @@ replication/replperf.c: tool to measure replication performance
         -D <masterbdn> -w <masterbpw>
         -d <replicabdn> -W <replicabpw>
         -n <number_of_entries> -I <interval_to_measure>
-        -b <basedn> -s <nanosec> -t <threads> -v
+        -b <basedn> -s <nanosec> -t <threads>
+        -e <uid_prefix> -a -v
         <nanosec>: nano seconds to wait b/w 2 adds
+        <uid_prefix>: uid=<uid_prefix>.<thread>.<seqnum>
+        -a: asynchronous add
+        -v: verbose
+
 

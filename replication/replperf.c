@@ -101,8 +101,10 @@ char *replicabdn = NULL;
 char *replicabpw = NULL;
 
 int threads = 1;
+int synchronous = 1;
 
-#define DNHEAD "uid=user"
+char *uidprefix = NULL;
+
 #define UNUSED ((unsigned int)(-1))
 
 static void usage(char *me);
@@ -112,13 +114,19 @@ static void *replica_thread(void *ptr);
 static int print_stats();
 
 /*
- * Usage: $0 -h <masterhost> -p <masterport> -i <replicahost> -q <replicaport>
- *           -D <masterbdn> -w <masterbpw> -d <replicabdn> -W <replicabpw>
- *           -b <basedn> -t <threads>
- *           -n <number_of_entries> -I <interval_to_measure> -s <nanosec>
- *           -v
+ * Usage: $0 -h <masterhost> -p <masterport> 
+ *           -i <replicahost> -q <replicaport>
+ *           -D <masterbdn> -w <masterbpw> 
+ *           -d <replicabdn> -W <replicabpw>
+ *           -n <number_of_entries> -I <interval_to_measure> 
+ *           -b <basedn> -s <nanosec> -t <threads>
+ *           -e <uid_prefix>
+ *           -a -v
  *
- *           <nanosec>:  nano second to wait between 2 adds
+ *           -s <nanosec>:  nano second to wait between 2 adds
+ *           -e <uid_prefix>: "uid=<uid_prefix>.<thread>.<seqnum>"
+ *           -a: asynchronous add
+ *           -v: verbose
  */
 int
 main(int ac, char **av)
@@ -141,7 +149,7 @@ main(int ac, char **av)
     basedn = strdup("dc=example,dc=com");;
 
     /* parse options */
-    while ((opt = getopt(ac, av, "h:p:i:q:D:w:d:W:b:n:I:s:t:v")) != -1) {
+    while ((opt = getopt(ac, av, "h:p:i:q:D:w:d:W:b:n:I:s:t:e:av")) != -1) {
         switch (opt) {
         case 'h': /* master host */
             if (masterhost) {
@@ -202,6 +210,12 @@ main(int ac, char **av)
             break;
         case 't': /* threads */
             threads = atoi(optarg);
+            break;
+        case 'e': /* uid prefix */
+            uidprefix = strdup(optarg);
+            break;
+        case 'a': /* asynchronous add */
+            synchronous = 0;
             break;
         case 'v': /* verbose */
             verbose = 1;
@@ -264,6 +278,13 @@ main(int ac, char **av)
     if (0 >= threads) {
         fprintf(stderr, "main: invalid thread count\n");
         usage(me);
+    }
+    if (NULL == uidprefix) {
+        uidprefix = strdup("user");
+        if (NULL == uidprefix) {
+            fprintf(stderr, "main: invalid uid prefix\n");
+            usage(me);
+        }
     }
 
     /* check master & replica are available */
@@ -361,6 +382,9 @@ main(int ac, char **av)
     if (perfitems) {
         free(perfitems);
     }
+    if (uidprefix) {
+        free(uidprefix);
+    }
     exit(0);
 }
 
@@ -374,9 +398,13 @@ usage(char *me)
             "        -D <masterbdn> -w <masterbpw>\n"
             "        -d <replicabdn> -W <replicabpw>\n"
             "        -n <number_of_entries> -I <interval_to_measure>\n"
-            "        -b <basedn> -s <nanosec> -t <threads> -v\n", me);
+            "        -b <basedn> -s <nanosec> -t <threads>\n"
+            "        -e <uid_prefix> -a -v\n", me);
     fprintf(stdout,
-            "        <nanosec>: nano seconds to wait b/w 2 adds\n");
+            "        <nanosec>: nano seconds to wait b/w 2 adds\n"
+            "        <uid_prefix>: uid=<uid_prefix>.<thread>.<seqnum>\n"
+            "        -a: asynchronous add\n"
+            "        -v: verbose\n");
     exit(1);
 }
 
@@ -435,12 +463,21 @@ cleanup_ldap(LDAP *ld)
 {
     int rc = 0;
     if (ld) {
-        ldap_unbind_ext(ld, NULL, NULL);
-    }
-    if (rc) {
-        fprintf(stderr, "cleanup_ldap: failed to unbind: %s (%d)\n",
-                ldap_err2string(rc), rc);
-        goto bail;
+#if 0
+        rc = ldap_unbind_ext(ld, NULL, NULL);
+        if (rc) {
+            fprintf(stderr, "cleanup_ldap: failed to unbind: %s (%d)\n",
+                    ldap_err2string(rc), rc);
+            goto bail;
+        }
+#else
+        rc = ldap_destroy(ld);
+        if (rc) {
+            fprintf(stderr, "cleanup_ldap: failed to destroy: %s (%d)\n",
+                    ldap_err2string(rc), rc);
+            goto bail;
+        }
+#endif
     }
 
 bail:
@@ -465,6 +502,9 @@ cleanup_mod(LDAPMod **mod, int num)
     }
     if ((*mod)->mod_values) {
         free((*mod)->mod_values);
+    }
+    if ((*mod)->mod_type) {
+        free((*mod)->mod_type);
     }
     if (*mod) {
         free(*mod);
@@ -613,8 +653,11 @@ init_template_entry(LDAPMod ***attrs)
     return rc;
 
 bail:
-    for (i = 0; i < len; i++) {
-        cleanup_mod(&((*attrs)[i]), 4); /* num 4 for objectclass is the largest */
+    if (attrs) {
+        for (i = 0; i < len && (*attrs)[i]; i++) {
+            cleanup_mod(&((*attrs)[i]), 4); /* num 4 for objectclass is the largest */
+        }
+        free(attrs);
     }
     return rc;
 }
@@ -623,8 +666,6 @@ bail:
  * master thread:
  * add entries; start timer
  */
-/* NYA: need to extend to multi-threaded for more stress?
- * i.e., multiple perfintes... */
 static void *
 master_thread(void *ptr)
 {
@@ -632,12 +673,16 @@ master_thread(void *ptr)
     perfItem *pip = NULL;
     LDAP *ld = NULL;
     LDAPMod **attrs = NULL;
+    LDAPMod **ap = NULL;
     unsigned int currid = 0;
     int rc;
     char dn[BUFSIZ];
     struct timespec nanoreq;
     struct thread_arg *myarg = (struct thread_arg *)ptr;
     perfItem *myperfitems = NULL;
+    int msgid = -1;
+    LDAPMessage *res;
+    struct timeval timeout = {0};
 
     if (NULL == myarg) {
         fprintf(stderr, "master_thread: no arg\n");
@@ -669,14 +714,38 @@ master_thread(void *ptr)
     nanoreq.tv_sec = 0;
     nanoreq.tv_nsec = nanosec;
 
+    if (synchronous) {
+        timeout.tv_sec = -1; /* the select blocks indefinitely. */
+    }
+
     for (currid = 0; currid < entrynum; currid++) {
-        snprintf(dn, BUFSIZ, "%s.%d.%u,%s",
-                 DNHEAD, myarg->threadid, currid, basedn);
-        rc = ldap_add_ext_s(ld, dn, attrs, NULL, NULL);
+        snprintf(dn, BUFSIZ, "uid=%s.%d.%u,%s",
+                 uidprefix, myarg->threadid, currid, basedn);
+        rc = ldap_add_ext(ld, dn, attrs, NULL, NULL, &msgid);
         if (rc) {
-            fprintf(stderr, "master_thread(id %d): ldap_add_ext_s: %s (%d)\n",
-                    currid, ldap_err2string(rc), rc);
+            fprintf(stderr, "master_thread(id %d): ldap_add_ext(%d): %s (%d)\n",
+                    currid, msgid, ldap_err2string(rc), rc);
             goto bail;
+        }
+        if (synchronous) {
+            rc = ldap_result(ld, msgid, 0/* MSG_ONE*/, &timeout, &res);
+            switch (rc) {
+            case -1:
+                fprintf(stderr,
+                        "master_thread(id %d):ldap_result(%d): %s (%d)\n",
+                        currid, msgid, ldap_err2string(rc), rc);
+                goto bail;
+            default:
+                ldap_parse_result(ld, res, &rc, NULL, NULL, NULL, NULL, 1);
+                if (rc) {
+                    fprintf(stderr,
+                            "master_thread(id %d):ldap_parse_result(%d): %s (%d)\n",
+                            currid, msgid, ldap_err2string(rc), rc);
+                    goto bail;
+                }
+            case 0:
+                break; /* timed out; just ignore */
+            }
         }
         if (0 == (currid % interval)) {
             id = currid / interval;
@@ -694,7 +763,27 @@ master_thread(void *ptr)
     }
 bail:
     myarg->rc  = rc;
+    if (!synchronous) {
+        int rcnt = entrynum;
+        nanoreq.tv_sec = 0;
+        nanoreq.tv_nsec = 1000;
+        timeout.tv_sec = -1; /* the select blocks indefinitely. */
+        while (rcnt > 0) {
+            rc = ldap_result(ld, LDAP_RES_ANY, 0/* MSG_ONE */, &timeout, &res);
+            if (rc > 0) {
+                rcnt--;
+            }
+            ldap_msgfree(res);
+            nanosleep(&nanoreq, NULL);
+        }
+    }
     cleanup_ldap(ld);
+    for (ap = attrs; ap && *ap; ap++) {
+        cleanup_mod(ap, 4); /* num 4 for objectclass is the largest */
+    }
+    if (attrs) {
+        free(attrs);
+    }
     return NULL;
 }
 
@@ -712,7 +801,7 @@ replica_thread(void *ptr)
     unsigned int i = 0;
     char *attrs[2];
     struct timeval timeout;
-    LDAPMessage *res;
+    LDAPMessage *res = NULL;
     struct timespec nanoreq;
     struct thread_arg *myarg = (struct thread_arg *)ptr;
     perfItem *myperfitems = NULL;
@@ -754,11 +843,12 @@ replica_thread(void *ptr)
             fprintf(stderr, "replica_thread[%d]: perfitems[%d]: id=%d\n",
                     myarg->threadid, i, pip->id);
         }
-        snprintf(dn, BUFSIZ, "%s.%d.%u,%s",
-                 DNHEAD, myarg->threadid, pip->id, basedn);
+        snprintf(dn, BUFSIZ, "uid=%s.%d.%u,%s",
+                 uidprefix, myarg->threadid, pip->id, basedn);
         do {
             rc = ldap_search_ext_s(ld, dn, LDAP_SCOPE_BASE, "(objectclass=*)",
                                attrs, 0, NULL, NULL, &timeout, -1, &res);
+            ldap_msgfree(res);
             if (LDAP_SUCCESS == rc) {
                 gettimeofday(&(pip->end), NULL);
                 break;
