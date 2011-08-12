@@ -1,2 +1,2 @@
-gcc -g -Wall replperf.c -o replperf -lpthread -lldap -lm > out 2>&1
+gcc $1 -Wall replperf.c -o replperf -lpthread -lldap -lm > out 2>&1
 cat out
