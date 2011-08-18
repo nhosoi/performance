@@ -65,4 +65,21 @@ replication/replperf.c: tool to measure replication performance
         -a: asynchronous add
         -v: verbose
 
+replication/scripts
+replication/scripts/389-setup.pl: script to set up 389-ds-base with replication
 
+    Usage:
+    389-setup.pl [-h <serverid>] [-p <port>]
+                 [-m <master count>] [-r <replica count>]
+                 [-w <rootdn password>] [-s <suffix>]
+                 [-v]
+
+replication/scripts/sunds-setup.pl: script to set up sun-ds with replication 
+
+    Usage:
+    sunds-setup.pl [-h <serverid>] [-p <port>]
+                   [-m <master count>] [-r <replica count>]
+                   [-w <rootdn password>] [-s <suffix>]
+                   [-I <instance dir, e.g. /opt/sunds>]
+                   [-H <home dir, e.g. /opt/sunds/dsee7>]
+                   [-v]

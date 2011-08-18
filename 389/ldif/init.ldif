@@ -1,8 +1,5 @@
-version: 1
-
 # entry-id: 1
 dn: dc=example,dc=com
-nsUniqueId: 613e23a3-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: domain
 dc: example
@@ -18,37 +15,22 @@ aci: (targetattr="carLicense || description || displayName || facsimileTelepho
  n attributes"; allow (write) userdn="ldap:///self";)
 aci: (targetattr ="*")(version 3.0;acl "Directory Administrators Group";allow 
  (all) (groupdn = "ldap:///cn=Directory Administrators, dc=example,dc=com");)
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 2
 dn: cn=Directory Administrators,dc=example,dc=com
-nsUniqueId: 613e23a4-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: groupofuniquenames
 cn: Directory Administrators
 uniqueMember: cn=Directory Manager
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 3
 dn: ou=Groups,dc=example,dc=com
-nsUniqueId: 613e23a5-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: organizationalunit
 ou: Groups
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 4
 dn: ou=People,dc=example,dc=com
-nsUniqueId: 613e23a6-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: organizationalunit
 ou: People
@@ -67,76 +49,46 @@ aci: (targetattr !="cn ||sn || uid")(targetfilter ="(ou=Product Testing)")(ver
 aci: (targetattr !="cn || sn || uid")(targetfilter ="(ou=Product Development)"
  )(version 3.0;acl "Engineering Group Permissions";allow (write)(groupdn = "ld
  ap:///cn=PD Managers,ou=groups,dc=example,dc=com");)
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 5
 dn: ou=Special Users,dc=example,dc=com
-nsUniqueId: 613e23a7-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: organizationalUnit
 ou: Special Users
 description: Special Administrative Accounts
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 6
 dn: cn=Accounting Managers,ou=Groups,dc=example,dc=com
-nsUniqueId: 613e23a8-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: Accounting Managers
 ou: groups
 description: People who can manage accounting entries
 uniqueMember: cn=Directory Manager
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 7
 dn: cn=HR Managers,ou=Groups,dc=example,dc=com
-nsUniqueId: 613e23a9-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: HR Managers
 ou: groups
 description: People who can manage HR entries
 uniqueMember: cn=Directory Manager
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 8
 dn: cn=QA Managers,ou=Groups,dc=example,dc=com
-nsUniqueId: 613e23aa-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: QA Managers
 ou: groups
 description: People who can manage QA entries
 uniqueMember: cn=Directory Manager
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
 
 # entry-id: 9
 dn: cn=PD Managers,ou=Groups,dc=example,dc=com
-nsUniqueId: 613e23ab-ace711e0-b140b409-f1c000f1
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: PD Managers
 ou: groups
 description: People who can manage engineer entries
 uniqueMember: cn=Directory Manager
-creatorsName:
-modifiersName:
-createTimestamp: 20110713003059Z
-modifyTimestamp: 20110713003059Z
-
