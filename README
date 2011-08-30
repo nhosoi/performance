@@ -10,18 +10,26 @@ README: this file
 389/scripts
 389/scripts/run_slamd_ds.sh: launch script
     Usage:
-    ./run_slamd_ds.sh [-D <directory_manager>] [-w <passwd>]
-            [-h <ds_host>] [-p <ds_port>] [-i <ID>] [-d <dbinstname>]
-            [-s <suffix>] [-t <testhome>] [-z <size>, e.g., 10k]
-            [-l <testldif>] [-m <initldif>]
-            [-T <slamdhost>] [-E <slamdhome>] [-R <duration>]
-            [-I <interval>] [-P] [-S] [-A] [-M] [-U]
-        -P: run profiler
-        -S: run search
-        -A: run add and delete
-        -M: run modify
-        -U: run auth/bind
-        Note: if -[SAMU] not specified, run all tests
+    run_slamd_ds.sh [-D <directory_manager>] [-w <passwd>]
+        [-h <ds_host>] [-p <ds_port>] [-i <ID>] [-d <dbinstname>]
+        [-s <suffix>] [-t <testhome>] [-z <size>, e.g., 10k]
+        [-l <testldif>] [-m <initldif>]
+        [-T <slamdhost>] [-E <slamdhome>] [-R <duration>]
+        [-X <SunDSinstdir> -Y <SunDShome>] [-Z]
+        [-I <interval>] [-P] [-S] [-A] [-M] [-U]
+    -S: run search
+    -A: run add and delete
+    -M: run modify
+    -U: run auth/bind
+    Note: if -[SAMU] not specified, run all 4 tests
+    -P: run profiler; the results are found in /home/perf/results/prof/<date>
+        opreport -l /usr/sbin/ns-slapd --session-dir=dir_path
+        where dir_path is /home/perf/results/prof/<date>/oprofile..
+    -X <SunDSinstdir>: Run SunDS instead of 389-ds, which instance dir is
+                       <SunDSinstdir>; /opt/sunds/slapd-ID, by default.
+    -Y <SunDShome>: Run SunDS instead of 389-ds, which home dir is
+                    <SunDSinstdir>
+    -Z: run SunDS instead of 389-ds.
 
 389/ldif
 389/ldif/init.ldif: minimum ldif

@@ -31,11 +31,16 @@
 # bind.script       add_delete.script    modify.script          
 # search.seq.script search.random.script
 
+# Directory Server needs to be preinstalled to run this test script.
+# The server's ID and port can be specified with '-I <ID>' and '-p <ds_port>',
+# respectively.  Otherwise, `hostname -s` and 389, by default.
+
 # Usage
 # $0 [-D <directory_manager>] [-w <passwd>]
 #    [-h <ds_host>] [-p <ds_port>] [-i <ID>] [-d <dbinstname>]
 #    [-s <suffix>] [-t <testhome>] [-l <testldif>] [-m <initldif>]
 #    [-T <slamdhost>] [-E <slamdhome>] [-R <duration>]
+#    [-X <SunDSinstdir> -Y <SunDShome>] [-Z]
 #    [-I <interval>] [-P] [-S] [-A] [-M] [-U]
 #
 #    -S: run search
@@ -48,6 +53,12 @@
 #        opreport -l /usr/sbin/ns-slapd --session-dir=dir_path
 #        where dir_path is $TESTHOME/results/prof/$NOW/oprofile.$OP.$PARAM
 
+#    -X <SunDSinstdir>: Run SunDS instead of 389-ds, which instance dir is
+#                       <SunDSinstdir>; /opt/sunds/slapd-ID, by default.
+#    -Y <SunDShome>: Run SunDS instead of 389-ds, which home dir is
+#                       <SunDSinstdir>
+#    -Z: run SunDS instead of 389-ds.
+
 ###############################################################################
 # DEFAULT VARIABLES
 # server
@@ -55,7 +66,7 @@ DIRMGR="cn=directory manager"
 DIRMGRPW="Secret123"
 HOST=localhost
 PORT=389
-ID=`hostname | awk -F'.' '{print $1}'`
+ID=`hostname -s`
 DBINST=userRoot
 SUFFIX="dc=example,dc=com"
 TESTHOME=/home/perf
@@ -100,6 +111,69 @@ ONEMEG=`expr 1024 \* 1024`
 ONEGIG=`expr 1024 \* $ONEMEG`
 TWOGIG=`expr 2 \* $ONEGIG`
 
+ISSUN=0
+SUNINSTDIR=/opt/sunds/slapd-${ID}
+SUNHOMEDIR=/opt/sunds/dsee7
+
+start_server()
+{
+	if [ $ISSUN -eq 0 ]; then
+		$INSTDIR/start-slapd
+	else
+		$SUNHOMEDIR/bin/dsadm start $SUNINSTDIR
+	fi
+	return $?
+}
+
+stop_server()
+{
+	if [ $ISSUN -eq 0 ]; then
+		$INSTDIR/stop-slapd
+	else
+		$SUNHOMEDIR/bin/dsadm stop $SUNINSTDIR
+	fi
+	return $?
+}
+
+import()
+{
+	MYDBINST=$1
+	LDIF=$2
+	if [ $ISSUN -eq 0 ]; then
+		# initialize the db
+		stop_server
+		RC=$?
+		if [ $RC -ne 0 ]; then
+		echo "$TAG: Stopping the server failed: $RC"
+		exit 1
+		fi
+		$INSTDIR/ldif2db -n $MYDBINST -i $LDIF
+		start_server
+		RC=$?
+		if [ $RC -ne 0 ]; then
+			echo "$TAG: Starting the server failed: $RC"
+			exit 1
+		fi
+	else
+		# This is cheating
+		# dsconf actually  takes passwd for the administrator, not DM.
+		# Assuming both DirMgr and admin user has the same password. :p
+		ADMPWFILE=/var/tmp/tmp-slamd-pw
+		echo $DIRMGRPW > $ADMPWFILE
+		echo 'y' | $SUNHOMEDIR/bin/dsconf import -a -w $ADMPWFILE -p $PORT $LDIF $SUFFIX
+		dowait=1
+		while [ $dowait -eq 1 ]
+		do
+			sleep 5
+			tail -n 10 $SUNINSTDIR/logs/errors | egrep "Import complete."
+			RC=$?
+			if [ $RC -eq 0 ]; then
+				dowait=0
+			fi
+		done
+	fi
+	return $?
+}
 # set up test environment
 # . check the server is up
 # . check ssh is available
@@ -123,7 +197,7 @@ setup_testenv()
 	RC=$?
 	if [ $RC -ne 0 ]; then
 		# server is down; restart it
-		$INSTDIR/start-slapd
+		start_server
 		RC=$?
 		if [ $RC -ne 0 ]; then
 			echo "$TAG: Starting the server failed: $RC"
@@ -243,7 +317,8 @@ set_cachesizes()
 	fi
 
 	if [ $modified -eq 1 ]; then
-		$INSTDIR/restart-slapd
+		stop_server
+		start_server
 		RC=$?
 		if [ $RC -ne 0 ]; then
 			echo "$TAG: Restarting the server failed: $RC"
@@ -292,22 +367,10 @@ run_add_delete()
 	echo "$TAG: cachememsize: $ECACHESIZE, dbcachesize: $DBCACHESIZE, $THREADCNT threads"
 
 	# initialize the db
-	$INSTDIR/stop-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
-		exit 1
-	fi
-	$INSTDIR/ldif2db -n $DBINST -i $TESTHOME/ldif/$INITLDIF
+	import $DBINST $TESTHOME/ldif/$INITLDIF
 	RC=$?
 	if [ $RC -ne 0 ]; then
 		echo "$TAG: Importing $TESTHOME/ldif/$INITLDIF failed: $RC"
-		exit 1
-	fi
-	$INSTDIR/start-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Starting the server failed: $RC"
 		exit 1
 	fi
 
@@ -393,23 +456,10 @@ run_search_all()
 	TAG="run_search_all"
 
 	# initialize the db
-	$INSTDIR/stop-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
-		exit 1
-	fi
-	$INSTDIR/ldif2db -n $DBINST -i $TESTHOME/ldif/$TESTLDIF
+	import $DBINST $TESTHOME/ldif/$TESTLDIF
 	RC=$?
 	if [ $RC -ne 0 ]; then
 		echo "$TAG: Importing $TESTHOME/ldif/$TESTLDIF failed: $RC"
-		exit 1
-	fi
-	# initialize the db
-	$INSTDIR/start-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
 		exit 1
 	fi
 
@@ -473,23 +523,10 @@ run_modify_all()
 	TAG="run_modify_all"
 
 	# initialize the db
-	$INSTDIR/stop-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
-		exit 1
-	fi
-	$INSTDIR/ldif2db -n $DBINST -i $TESTHOME/ldif/$TESTLDIF
+	import $DBINST $TESTHOME/ldif/$TESTLDIF
 	RC=$?
 	if [ $RC -ne 0 ]; then
 		echo "$TAG: Importing $TESTHOME/ldif/$TESTLDIF failed: $RC"
-		exit 1
-	fi
-	# initialize the db
-	$INSTDIR/start-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
 		exit 1
 	fi
 
@@ -553,23 +590,10 @@ run_auth_all()
 	TAG="run_auth_all"
 
 	# initialize the db
-	$INSTDIR/stop-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
-		exit 1
-	fi
-	$INSTDIR/ldif2db -n $DBINST -i $TESTHOME/ldif/$TESTLDIF
+	import $DBINST $TESTHOME/ldif/$TESTLDIF
 	RC=$?
 	if [ $RC -ne 0 ]; then
 		echo "$TAG: Importing $TESTHOME/ldif/$TESTLDIF failed: $RC"
-		exit 1
-	fi
-	# initialize the db
-	$INSTDIR/start-slapd
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo "$TAG: Stopping the server failed: $RC"
 		exit 1
 	fi
 
@@ -607,17 +631,25 @@ print_usage()
 	echo "		[-s <suffix>] [-t <testhome>] [-z <size>, e.g., 10k]"
 	echo "		[-l <testldif>] [-m <initldif>]"
 	echo "		[-T <slamdhost>] [-E <slamdhome>] [-R <duration>]"
+	echo "		[-X <SunDSinstdir> -Y <SunDShome>] [-Z]"
 	echo "		[-I <interval>] [-P] [-S] [-A] [-M] [-U]"
-	echo "	-P: run profiler"
 	echo "	-S: run search"
 	echo "	-A: run add and delete"
 	echo "	-M: run modify"
 	echo "	-U: run auth/bind"
 	echo "	Note: if -[SAMU] not specified, run all 4 tests"
+	echo "	-P: run profiler; the results are found in $TESTHOME/results/prof/$NOW"
+	echo "	    opreport -l /usr/sbin/ns-slapd --session-dir=dir_path"
+	echo "	    where dir_path is $TESTHOME/results/prof/$NOW/oprofile.$OP.$PARAM"
+	echo "	-X <SunDSinstdir>: Run SunDS instead of 389-ds, which instance dir is"
+	echo "	                   <SunDSinstdir>; /opt/sunds/slapd-ID, by default."
+	echo "	-Y <SunDShome>: Run SunDS instead of 389-ds, which home dir is"
+	echo "	                <SunDSinstdir>"
+	echo "	-Z: run SunDS instead of 389-ds."
 }
 
 OPTIND=1
-while getopts D:w:h:p:i:d:s:t:z:l:m:T:E:R:I:SAMUP C
+while getopts D:w:h:p:i:d:s:t:z:l:m:T:E:R:I:X:Y:SAMUPZ C
 do
 	case $C in
 	D)
@@ -665,6 +697,14 @@ do
 	I)
 		INTERVAL="$OPTARG"
 		;;
+	X)
+		SUNINSTDIR="$OPTARG"
+		ISSUN=1
+		;;
+	Y)
+		SUNHOMEDIR="$OPTARG"
+		ISSUN=1
+		;;
 	S)
 		OPSRCH=1
 		OPALL=0
@@ -683,6 +723,9 @@ do
 		;;
 	P)
 		WITHPROF=1
+		;;
+	Z)
+		ISSUN=1
 		;;
 	\?)
 		print_usage
