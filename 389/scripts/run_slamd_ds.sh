@@ -62,8 +62,8 @@
 ###############################################################################
 # DEFAULT VARIABLES
 # server
-DIRMGR="cn=directory manager"
-DIRMGRPW="Secret123"
+DIRMGR='cn=directory manager'
+DIRMGRPW='Secret123'
 HOST=localhost
 PORT=389
 ID=`hostname -s`
@@ -159,7 +159,7 @@ import()
 		# dsconf actually  takes passwd for the administrator, not DM.
 		# Assuming both DirMgr and admin user has the same password. :p
 		ADMPWFILE=/var/tmp/tmp-slamd-pw
-		echo $DIRMGRPW > $ADMPWFILE
+		echo "$DIRMGRPW" > $ADMPWFILE
 		echo 'y' | $SUNHOMEDIR/bin/dsconf import -a -w $ADMPWFILE -p $PORT $LDIF $SUFFIX
 		dowait=1
 		while [ $dowait -eq 1 ]
@@ -221,24 +221,24 @@ setup_testenv()
 	echo "$TAG: slamd is available"
 
 	# are op scripts available?
-	script=`ssh $SLAMDHOST ls $SLAMDHOME/scripts/$SIZE/$SCRIPTADDDEL`
+	script=`ssh $SLAMDHOST ls $SLAMDHOME/scripts/$SIZE/$SCRIPTADDDEL.template`
 	if [ "$script" = "" ]; then
-		echo "$TAG: $SCRIPTADDDEL is not available"
+		echo "$TAG: $SCRIPTADDDEL.template is not available"
 		exit 1
 	fi
-	echo "$TAG: $SCRIPTADDDEL is available"
-	script=`ssh $SLAMDHOST ls $SLAMDHOME/scripts/$SIZE/$SCRIPTSRCH`
+	echo "$TAG: $SCRIPTADDDEL.template is available"
+	script=`ssh $SLAMDHOST ls $SLAMDHOME/scripts/$SIZE/$SCRIPTSRCH.template`
 	if [ "$script" = "" ]; then
-		echo "$TAG: $SCRIPTSRCH is not available"
+		echo "$TAG: $SCRIPTSRCH.template is not available"
 		exit 1
 	fi
-	echo "$TAG: $SCRIPTSRCH is available"
-	script=`ssh $SLAMDHOST ls $SLAMDHOME/scripts/$SIZE/$SCRIPTMOD`
+	echo "$TAG: $SCRIPTSRCH.template is available"
+	script=`ssh $SLAMDHOST ls $SLAMDHOME/scripts/$SIZE/$SCRIPTMOD.template`
 	if [ "$script" = "" ]; then
-		echo "$TAG: $SCRIPTMOD is not available"
+		echo "$TAG: $SCRIPTMOD.template is not available"
 		exit 1
 	fi
-	echo "$TAG: $SCRIPTMOD is available"
+	echo "$TAG: $SCRIPTMOD.template is available"
 
 	# check ldif files are available
 	if [ ! -f $TESTHOME/ldif/$INITLDIF ]; then
@@ -378,7 +378,8 @@ run_add_delete()
 	set_cachesizes $ECACHESIZE $DBCACHESIZE
 
 	start_profiler
-	ssh $SLAMDHOST $SCRIPTRUN $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTADDDEL "$PARAMS" $RESULTDIR
+	# Cannot pass $DIRMGR since it usually contains a space in it... :(
+	ssh $SLAMDHOST $SCRIPTRUN $PORT "$DIRMGRPW" $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTADDDEL "$PARAMS" $RESULTDIR
 	stop_profiler $SCRIPTADDDEL "$PARAMS"
 	RC=$?
 	if [ $RC -ne 0 ]; then
@@ -440,7 +441,8 @@ run_search()
 	ldapsearch -LLLx -h $HOST -p $PORT -D "$DIRMGR" -w "$DIRMGRPW" -b "$SUFFIX" "(objectclass=*)" > /dev/null
 
 	start_profiler
-	ssh $SLAMDHOST $SCRIPTRUN $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTSRCH "$PARAMS" $RESULTDIR
+	# Cannot pass $DIRMGR since it usually contains a space in it... :(
+	ssh $SLAMDHOST $SCRIPTRUN $PORT "$DIRMGRPW" $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTSRCH "$PARAMS" $RESULTDIR
 	stop_profiler $SCRIPTSRCH "$PARAMS"
 	RC=$?
 	if [ $RC -ne 0 ]; then
@@ -507,7 +509,8 @@ run_modify()
 	ldapsearch -LLLx -h $HOST -p $PORT -D "$DIRMGR" -w "$DIRMGRPW" -b "$SUFFIX" "(objectclass=*)" > /dev/null
 
 	start_profiler
-	ssh $SLAMDHOST $SCRIPTRUN $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTMOD "$PARAMS" $RESULTDIR
+	# Cannot pass $DIRMGR since it usually contains a space in it... :(
+	ssh $SLAMDHOST $SCRIPTRUN $PORT "$DIRMGRPW" $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTMOD "$PARAMS" $RESULTDIR
 	stop_profiler $SCRIPTMOD "$PARAMS"
 	RC=$?
 	if [ $RC -ne 0 ]; then
@@ -574,7 +577,8 @@ run_auth()
 	ldapsearch -LLLx -h $HOST -p $PORT -D "$DIRMGR" -w "$DIRMGRPW" -b "$SUFFIX" "(objectclass=*)" > /dev/null
 
 	start_profiler
-	ssh $SLAMDHOST $SCRIPTRUN $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTAUTH "$PARAMS" $RESULTDIR
+	# Cannot pass $DIRMGR since it usually contains a space in it... :(
+	ssh $SLAMDHOST $SCRIPTRUN $PORT "$DIRMGRPW" $SLAMDHOME $DURATION $INTERVAL $THREADCNT $SIZE $SCRIPTAUTH "$PARAMS" $RESULTDIR
 	stop_profiler $SCRIPTAUTH "$PARAMS"
 	RC=$?
 	if [ $RC -ne 0 ]; then
